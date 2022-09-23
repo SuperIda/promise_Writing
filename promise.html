@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <script>
+        // 1. executor: 执行器
+        // 2. promise对象仅有三种状态
+        // pending（进行中）
+        // fulfilled（已成功）
+        // rejected（已失败）
+        // 3. promise的状态只能改变一次
+        // 4. 在executor 执行过程中, 如果出现了错误,promise需要改为rejected状态, 并展示错误对象
+        const PENDING = 'pending'
+        const FULFILLED = 'fulfilled'
+        const REJECTED = 'rejected'
+        const onFulfilled = null
+        const onRejected = null
+        onFulfilledCallbacks = []
+        onRejectedCallbacks = []
+        class Promise {
+            value = null /*value记录成功的值*/
+            reason = null /*reason记录失败的值*/
+            status = PENDING
+            constructor(executor) {
+                //resolve 函数
+                const resolve = (value) => {
+                    if (this.status == PENDING) {
+                        this.value = value;
+                        this.status = FULFILLED
+                        this.onFulfilled(value)
+                    }
+                }
+                //reject 函数
+                const reject = (reason) => {
+                    if (this.status == PENDING) {
+                        this.reason = reason;
+                        this.status = REJECTED
+                        this.onRejected = (reason)
+                    }
+                }
+                // 捕捉executor执行中的错误
+                try {
+                    executor(resolve, reject)
+                } catch (e) {
+                    reject(e)
+                }
+            }
+            then(onFulfilled, onRejected) {
+                if (this.status === FULFILLED) {
+                    onFulfilled(this.value)
+                }
+                if (this.status === REJECTED) {
+                    onRejected(this.reason)
+                }
+                if (this.status === PENDING) {
+                    // 保存(订阅)
+                    this.onFulfilledCallbacks.push(() => {
+                        //加代码
+                        this.onFulfilled = onFulfilled
+                    })
+                    this.onRejectedCallbacks.push(() => {
+                        // 加代码
+                        this.onRejected = onRejected
+                    })
+                }
+            }
+        }
+
+        // promise会保存成功或者失败的结果
+        const p1 = new Promise((resolve, reject) => {
+            // console.log(a)
+            setTimeout(() => reject('失败'))
+            // ()=>{}
+        })
+        // const p2 = new Promise((resolve, reject) => {
+        //     resolve('成功')
+        //     // reject('失败')
+        // })
+        // const p3 = new Promise((resolve, reject) => {
+        //     // resolve('成功')
+        //     reject('失败')
+        // })
+        p1.then(
+            (res) => { console.log(res) },
+            (error) => { console.log(error) }
+        )
+        // console.log(p1, p2, p3)
+        console.log(p1)
+
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <script>
+    // 1. executor: 执行器
+    // 2. promise的状态: 1. pending准备态 2. fulfilled履行态 3. rejected 拒绝态
+    // 3. promise的状态只能改变一次
+    // 4. 在executor执行过程中, 如果说出现了错误, promise需要改为rejected, 保存失败的原因
+    // 5. 发布订阅模式
+    //  - 订阅的过程
+    //  - 记录
+    //  - 发布的过程(在恰当的时机通知)
+    // 比如: promise的异步的情况, onFulfilled和onrejected函数先缓存下俩,然后在resolve或者reject的时候, 再调用
+    // $bus
+    // 原生事件
+    // pub-subscipe
+    // 6. then的回调, 异步执行
+    const PENDING = 'pending'
+    const FULFILLED = 'fulfilled'
+    const REJECTED = 'rejected'
+
+    class Promise {
+      value = null /* value记录成功的值 */
+      reason = null /* reason记录失败的值 */
+      status = PENDING
+      onFulfilledCallbacks = []
+      onRejectedCallbacks = []
+
+      constructor(executor) {
+        const resolve = (value) => {
+          if (this.status === PENDING) {
+            this.value = value
+            this.status = FULFILLED
+            this.onFulfilledCallbacks.forEach(cb => cb())
+          }
+        }
+        const reject = (reason) => {
+          if (this.status === PENDING) {
+            this.reason = reason
+            this.status = REJECTED
+            this.onRejectedCallbacks.forEach(cb => cb())
+          }
+        }
+
+        try {
+          executor(resolve, reject)
+        } catch (error) {
+          // promise --> rejected
+          reject(error)
+        }
+      }
+
+      then(onFulfilled, onRejected) {
+        const promise2 = new Promise((resolve, reject) => {
+          if (this.status === FULFILLED) {
+            queueMicrotask(() => {
+              const x = onFulfilled(this.value)
+              resolvePromise(promise2, x, resolve, reject)
+            })
+          }
+
+          if (this.status === REJECTED) {
+            queueMicrotask(() => {
+              const x = onRejected(this.reason)
+              resolvePromise(promise2, x, resolve, reject)
+            })
+          }
+
+          if (this.status === PENDING) {
+            // 保存(订阅)
+            this.onFulfilledCallbacks.push(() => {
+              // 加代码..
+              queueMicrotask(() => {
+                const x = onFulfilled(this.value)
+                resolvePromise(promise2, x, resolve, reject)
+              })
+            })
+
+            this.onRejectedCallbacks.push(() => {
+              queueMicrotask(() => {
+                const x = onRejected(this.reason)
+                resolvePromise(promise2, x, resolve, reject)
+              })
+            })
+          }
+        })
+
+        return promise2
+      }
+    }
+
+    // // promise2: 返回的promise, x: then回调的返回值, resolve,reject:用于确定promise2的状态
+    function resolvePromise(promise2, x, resolve, reject) {
+      if (promise2 === x) {
+        return reject(new TypeError('Chaining cycle detected for promise #<Promise>'))
+      }
+
+      if (typeof x === 'object' && x !== null || typeof x === 'function') {
+        try {
+          // {then : '111'}
+          let then = x.then
+          if (typeof then === 'function') {
+            then.call(
+              x,
+              (res) => resolvePromise(promise2, res, resolve, reject),
+              (err) => reject(err)
+            )
+          } else {
+            resolve(x)
+          }
+        } catch (error) {
+          reject(error)
+        }
+      } else {
+        resolve(x)
+      }
+    }
+
+    // ================ 分割线 ====================
+    // then方法而言
+    //  - 不管是成功的回调还是失败的回调函数, return是非thenable对象, 那么一定会触发下一个then成功的回调
+    //    并且return的值, 可以接受
+
+    // - return的是thenable对象, 取决于resolve和reject
+
+    // thenable对象: 可以.then的对象: promise, { then(){} } , fucntion fn(){} fn.then = fucntion(){}
+    const p1 = new Promise((resolve, reject) => {
+      resolve()
+    })
+
+    const p2 = p1.then(() => {
+      return new Promise((resolve) => resolve(new Promise(resolve => resolve(111))))
+    })
+
+    p2.then(
+      (res) => console.log(res),
+      (error) => {
+        console.log(error)
+      })
+
+
+
+  </script>
+</body>
+
+</html>
