@@ -1,75 +1,81 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
+  <head>
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>
-</head>
+  </head>
 
-<body>
+  <body>
     <script>
-        Promise.all = function (list = []) {
-            // console.log('111')
-            const res = [];
-            let num = 0;
-            return new Promise((resolve, reject) => {
-                list.forEach((promise, index) => {
-                    promise.then(
-                        (success) => {
-                            num++;
-                            res[index] = success;
-                            if (num === list.length) resolve(res);
-                        },
-                        (fail) => {
-                            reject(fail);
-                        }
-                    );
-                });
-            });
-        };
-
-        Promise.race = function (list = []) {
-            return new Promise((resolve, reject) => {
-                list.forEach((promise) => {
-                    promise.then(
-                        (res) => {
-                            resolve(res);
-                        },
-                        (err) => {
-                            reject(err);
-                        }
-                    );
-                });
-            });
-        };
-
-        const p1 = new Promise((resolve, reject) => {
-            resolve(1);
+      Promise.all = function (list = []) {
+        const res = [];
+        let num = 0;
+        return new Promise((resolve, reject) => {
+          list.forEach((promise, index) => {
+            promise.then(
+              (success) => {
+                num++;
+                res[index] = success;
+                if (num === list.length) resolve(res);
+              },
+              (fail) => {
+                reject(fail);
+              }
+            );
+          });
         });
-        const p2 = new Promise(() => {
-            throw new Error();
-        });
-        const p3 = new Promise((resolve, reject) => {
-            resolve(3);
-        });
+      };
 
-        // Promise.all([p1, p2]).then((res) => {
-        //   console.log(res);
-        // }, (error) => {
-        //   console.log(error);
-        // })
+      Promise.race = function (list = []) {
+        return new Promise((resolve, reject) => {
+          list.forEach((promise) => {
+            promise.then(
+              (res) => {
+                resolve(res);
+              },
+              (err) => {
+                reject(err);
+              }
+            );
+          });
+        });
+      };
 
-        Promise.race([p1, p2]).then(
-            (res) => {
-                console.log(res);
-            },
-            (error) => {
-                console.log(error);
-            }
-        );
+      const p1 = new Promise((resolve, reject) => {
+        setTimeout(() => {
+          resolve(1);
+        }, 1000);
+      });
+      const p2 = new Promise((resolve, reject) => {
+        setTimeout(() => {
+          resolve(2);
+        }, 2000);
+      });
+      const p3 = new Promise((resolve, reject) => {
+        setTimeout(() => {
+          resolve(3);
+        }, 3000);
+      });
+
+      Promise.all([p1, p2, p3]).then(
+        (res) => {
+          console.log(res);
+        },
+        (error) => {
+          console.error(error);
+        }
+      );
+
+      // Promise.race([p1, p2, p3]).then(
+      //   (res) => {
+      //     console.log(res);
+      //   },
+      //   (error) => {
+      //     console.error(error);
+      //   }
+      // );
     </script>
-</body>
-
+  </body>
 </html>
